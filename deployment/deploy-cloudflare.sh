@@ -9,6 +9,7 @@ exec 9>"$(git rev-parse --git-path raniweb-deploy.lock)"
 flock -n 9
 
 network=cloudflare-net
+port=18081
 app=raniweb-web
 candidate=raniweb-web-candidate
 previous=raniweb-web-previous
@@ -26,11 +27,11 @@ check_app() {
   for ((attempt=0; attempt<20; attempt++)); do
     if docker exec "$name" node -e '
       Promise.all(["/api/health", "/"].map(path =>
-        fetch("http://127.0.0.1:3000" + path, {signal: AbortSignal.timeout(2000)})
+        fetch(`http://127.0.0.1:${process.argv[1]}${path}`, {signal: AbortSignal.timeout(2000)})
           .then(response => response.ok)
       )).then(results => process.exit(results.every(Boolean) ? 0 : 1))
         .catch(() => process.exit(1))
-    ' >/dev/null 2>&1; then
+    ' "$port" >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
@@ -40,6 +41,7 @@ check_app() {
 
 run_app() {
   docker run -d --name "$1" --restart "$2" --network "$network" \
+    --env "PORT=$port" \
     --read-only --tmpfs /tmp:rw,nosuid,noexec,size=64m \
     --cap-drop ALL --security-opt no-new-privileges "$image"
 }
@@ -77,7 +79,7 @@ if exists "$app"; then
 fi
 
 if run_app "$app" unless-stopped && check_app "$app"; then
-  echo "Deployed $revision on $network as $app:3000"
+  echo "Deployed $revision on $network as $app:$port"
 else
   docker logs --tail 50 "$app" || true
   if exists "$app"; then

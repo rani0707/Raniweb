@@ -71,13 +71,13 @@ sudo journalctl -u raniweb-cloudflare-deploy.service -n 40 --no-pager
 ```bash
 sudo docker run --rm --network cloudflare-net --entrypoint node \
   "raniweb:$(git rev-parse HEAD)" -e '
-    fetch("http://raniweb-web:3000/api/health", {signal: AbortSignal.timeout(5000)})
+    fetch("http://raniweb-web:18081/api/health", {signal: AbortSignal.timeout(5000)})
       .then(async response => { if (!response.ok) throw Error(response.status); console.log(await response.text()) })
       .catch(error => { console.error(error); process.exitCode = 1 })
   '
 ```
 
-`{"status":"ok"}`가 나오면 기존 터널의 2번 `raniweb.kr` 서비스 URL을 `http://raniweb-web:3000`으로 지정합니다. 1번 `lac.raniweb.kr`은 기존 주소를 사용합니다. RaniWeb은 호스트에 포트를 공개하지 않습니다.
+`{"status":"ok"}`가 나오면 기존 터널의 2번 `raniweb.kr` 서비스 URL을 `http://raniweb-web:18081`로 지정합니다. 1번 `lac.raniweb.kr`은 기존 주소를 사용합니다. RaniWeb은 호스트에 포트를 공개하지 않습니다.
 
 ```bash
 curl -fsS https://raniweb.kr/api/health &&
