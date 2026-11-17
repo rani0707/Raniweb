@@ -1,0 +1,57 @@
+# Production only: images are supplied by deployment/deploy.py after verification.
+# There is intentionally no build, Docker socket mount or automatic image tag pull.
+name: raniweb
+x-app: &app
+  restart: unless-stopped
+  user: "1001:1001"
+  read_only: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  tmpfs: ["/tmp:rw,nosuid,noexec,size=64m,mode=1777"]
+  env_file: ["${RANIWEB_APP_ENV:?Use deployment/install.py first}"]
+  environment: { NODE_ENV: production, PORT: "3000", HOSTNAME: 0.0.0.0 }
+  networks: [backend]
+  mem_limit: 512m
+  cpus: 1.0
+  pids_limit: 128
+  stop_grace_period: 30s
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+services:
+  blue:
+    <<: *app
+    profiles: [blue]
+    container_name: raniweb-blue
+    image: ${RANIWEB_BLUE_IMAGE:?Verified digest required}
+  green:
+    <<: *app
+    profiles: [green]
+    container_name: raniweb-green
+    image: ${RANIWEB_GREEN_IMAGE:?Verified digest required}
+  gateway:
+    container_name: raniweb-gateway
+    image: ${RANIWEB_GATEWAY_IMAGE:?Pinned gateway digest required}
+    restart: unless-stopped
+    user: "101:101"
+    entrypoint: [nginx, -g, "daemon off;"]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    tmpfs: ["/tmp:rw,nosuid,noexec,size=32m,mode=1777"]
+    ports: ["127.0.0.1:18080:8080"]
+    volumes:
+      - "${RANIWEB_DEPLOY_DIR:?}/gateway.conf:/etc/nginx/nginx.conf:ro"
+      - "${RANIWEB_STATE_DIR:?}/gateway:/etc/nginx/active:ro"
+      - "${RANIWEB_STATE_DIR:?}/assets:/srv/assets:ro"
+    networks: [backend, edge]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: { max-size: 5m, max-file: "3" }
+networks:
+  backend:
+    internal: true
+  edge:

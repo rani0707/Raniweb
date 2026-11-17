@@ -1,0 +1,22 @@
+# Dependencies, generated files and local build output
+node_modules/
+.next/
+out/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
+audit-results/
+
+# Local environment and credentials
+.env*
+!.env.example
+.npmrc
+*.pem
+*.key
+
+# Local OS files and logs
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,46 @@
+.error-document { margin: 0; background: #fff; color: #0a0a0a; font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+.error-page { --error-foreground: var(--text-primary, #0a0a0a); --error-muted: var(--text-secondary, #6b6b6b); --error-border: var(--border-color, #e5e5e5); --error-background: var(--bg-primary, #fff); color: var(--error-foreground); background: var(--error-background); min-height: 100svh; padding: 0 6vw; display: flex; flex-direction: column; box-sizing: border-box; }
+.error-page * { box-sizing: border-box; }
+.error-page a { color: inherit; text-decoration: none; }
+.error-page a:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
+.error-top, .error-footer { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.error-top { padding: 30px 0; border-bottom: 1px solid var(--error-border); }
+.error-brand { font-size: 20px; font-weight: 750; letter-spacing: 1px; }
+.error-brand span { display: inline-block; margin-left: 18px; color: var(--error-muted); font-size: 10px; letter-spacing: 2px; font-weight: 500; }
+.error-status, .error-footer, .error-reference { font-size: 12px; color: var(--error-muted); }
+.error-main { flex: 1; display: grid; grid-template-columns: 1fr 1.05fr; align-items: center; gap: 7vw; max-width: 1200px; width: 100%; margin: 0 auto; padding: 96px 0; }
+.error-code { position: relative; font-size: clamp(100px, 17vw, 240px); font-weight: 800; letter-spacing: -.09em; line-height: 1; padding: 28px 0; color: var(--error-foreground); }
+.error-orbit { position: absolute; width: 88%; aspect-ratio: 1; border: 1px solid var(--error-border); border-radius: 50%; top: 50%; left: 42%; transform: translate(-50%, -50%); pointer-events: none; }
+.error-label { font-size: 10px; letter-spacing: 2px; display: flex; align-items: center; gap: 9px; color: var(--error-muted); }
+.error-label > span { display: block; width: 6px; height: 6px; border-radius: 50%; background: #d97706; }
+.error-copy h1 { font-size: clamp(25px, 3vw, 38px); line-height: 1.35; letter-spacing: -1.2px; margin: 22px 0 18px; word-break: keep-all; }
+.error-copy p { color: var(--error-muted); font-size: 14px; max-width: 390px; margin: 0; word-break: keep-all; }
+.error-actions { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 12px; }
+.error-actions a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 26px; padding: 12px 18px; font-size: 13px; border-radius: 6px; border: 1px solid var(--error-border); }
+.error-actions .error-primary { background: var(--error-foreground); color: var(--error-background); border-color: var(--error-foreground); }
+.error-actions a:hover { opacity: .8; }
+.error-reference { margin-top: 42px; font-size: 10px; letter-spacing: 2px; }
+.error-reference > span { margin: 0 14px; }
+.error-footer { border-top: 1px solid var(--error-border); padding: 24px 0; }
+.error-retry { position: fixed; right: 24px; bottom: 24px; min-height: 44px; padding: 12px 20px; border: 1px solid currentColor; background: var(--bg-primary, #fff); color: var(--text-primary, #0a0a0a); border-radius: 6px; font: inherit; cursor: pointer; }
+@media (prefers-color-scheme: dark) {
+  .error-document { background: #0a0a0a; color: #f5f5f5; }
+  .error-document .error-page { --error-foreground: #f5f5f5; --error-muted: #a0a0a0; --error-border: #2a2a2a; --error-background: #0a0a0a; }
+}
+@media (max-width: 700px) {
+  .error-page { padding: 0 24px; }
+  .error-main { grid-template-columns: 1fr; gap: 26px; padding: 64px 0 48px; }
+  .error-code { font-size: 120px; max-width: 270px; margin: 0 auto; width: 100%; text-align: center; }
+  .error-orbit { width: 190px; left: 50%; }
+  .error-status { display: none; }
+  .error-copy { text-align: center; }
+  .error-label, .error-actions { justify-content: center; }
+  .error-copy p { margin: 0 auto; }
+  .error-reference { margin-top: 26px; }
+  .error-footer { font-size: 11px; }
+}
+
+html[data-theme="light"] .error-document { background: #fff; color: #0a0a0a; }
+html[data-theme="light"] .error-document .error-page { --error-foreground: #0a0a0a; --error-muted: #6b6b6b; --error-border: #e5e5e5; --error-background: #fff; }
+html[data-theme="dark"] .error-document { background: #0a0a0a; color: #f5f5f5; }
+html[data-theme="dark"] .error-document .error-page { --error-foreground: #f5f5f5; --error-muted: #a0a0a0; --error-border: #2a2a2a; --error-background: #0a0a0a; }

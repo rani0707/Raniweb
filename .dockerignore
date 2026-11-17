@@ -1,0 +1,31 @@
+# Only send the files used to install, check and build the application.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!next.config.js
+!eslint.config.mjs
+!playwright.config.ts
+!proxy.ts
+!app/
+!app/**
+!components/
+!components/**
+!data/
+!data/**
+!lib/
+!lib/**
+!public/
+!public/**
+!scripts/
+!scripts/**
+!tests/
+!tests/**
+
+# Keep credentials and local artifacts out even under included directories.
+**/.env*
+**/.npmrc
+**/.DS_Store
+**/*.log
+**/*.pem
+**/*.key
