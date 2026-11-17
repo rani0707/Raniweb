@@ -47,9 +47,13 @@ jobs:
           ignore-unfixed: false
           exit-code: '1'
       - name: Smoke test production container
+        shell: bash
         run: |
-          set -euo pipefail
-          docker run -d --name raniweb-ci --read-only --tmpfs /tmp:rw,nosuid,noexec,size=64m +            --cap-drop ALL --security-opt no-new-privileges -e PORT=18081 +            -p 127.0.0.1:18081:18081 raniweb:ci
+          docker run --detach --name raniweb-ci --read-only \
+            --tmpfs /tmp:rw,nosuid,noexec,size=64m \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --env PORT=18081 --publish 127.0.0.1:18081:18081 \
+            raniweb:ci
           trap 'docker logs raniweb-ci; docker rm -f raniweb-ci' EXIT
           curl --retry 15 --retry-all-errors --retry-delay 1 --max-time 3 -fsS http://127.0.0.1:18081/api/health
           npm run smoke -- http://127.0.0.1:18081
