@@ -1,12 +1,15 @@
 # syntax=docker/dockerfile:1.7
-FROM node:26.13.0-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS base
+FROM node:26.13.1-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+RUN apk upgrade --no-cache
 
 FROM base AS builder
 ARG TARGETARCH
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts --no-audit --no-fund --prefer-offline
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --global npm@12.2.2 --ignore-scripts --no-audit --no-fund && \
+    npm ci --ignore-scripts --no-audit --no-fund --prefer-offline
 COPY . .
 RUN --mount=type=cache,id=raniweb-next-${TARGETARCH},target=/app/.next/cache npm run check && npm run build
 
@@ -15,6 +18,7 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 RUN apk add --no-cache tini && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public

@@ -1,4 +1,3 @@
-# Independent code checks only. The existing Docker/publish workflow is unchanged.
 name: Code and browser regression checks
 on:
   pull_request:
@@ -18,8 +17,39 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Source dependency and secret gate
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: audit-results,node_modules,.next,test-results,playwright-report
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: '1'
+      - run: npm install --global npm@12.2.2 --ignore-scripts --no-audit --no-fund
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run check
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:e2e
+      - name: Build production image
+        run: docker build --tag raniweb:ci .
+      - name: Scan production image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: image
+          image-ref: raniweb:ci
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: '1'
+      - name: Smoke test production container
+        run: |
+          set -euo pipefail
+          docker run -d --name raniweb-ci --read-only --tmpfs /tmp:rw,nosuid,noexec,size=64m +            --cap-drop ALL --security-opt no-new-privileges -e PORT=18081 +            -p 127.0.0.1:18081:18081 raniweb:ci
+          trap 'docker logs raniweb-ci; docker rm -f raniweb-ci' EXIT
+          curl --retry 15 --retry-all-errors --retry-delay 1 --max-time 3 -fsS http://127.0.0.1:18081/api/health
+          npm run smoke -- http://127.0.0.1:18081

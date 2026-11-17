@@ -1,4 +1,0 @@
-# Exact case from the GitHub repository URL; defines the signature trust boundary.
-repository = "YOUR_OWNER/YOUR_REPOSITORY"
-channel = "stable"
-workflow = "docker.yml"

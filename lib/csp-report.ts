@@ -46,16 +46,15 @@ export async function readReport(request: Request, timeoutMs = 5000): Promise<un
   if (!reader) throw new SyntaxError('Empty report')
   const bytes = new Uint8Array(MAX_REPORT_BYTES)
   let size = 0
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const deadline = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new ReportTimeoutError())
-      void reader.cancel().catch(() => {})
-    }, timeoutMs)
-  })
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    void reader.cancel().catch(() => {})
+  }, timeoutMs)
   try {
     while (true) {
-      const { value, done } = await Promise.race([reader.read(), deadline])
+      const { value, done } = await reader.read()
+      if (timedOut) throw new ReportTimeoutError()
       if (done) break
       if (size + value.byteLength > MAX_REPORT_BYTES) {
         void reader.cancel().catch(() => {})
