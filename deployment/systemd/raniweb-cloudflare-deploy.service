@@ -1,0 +1,14 @@
+[Unit]
+Description=Build and deploy RaniWeb on cloudflare-net
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+SupplementaryGroups=docker
+WorkingDirectory=/home/ubuntu/RaniWeb
+ExecStart=/bin/bash /home/ubuntu/RaniWeb/deployment/deploy-cloudflare.sh
+Environment=GIT_TERMINAL_PROMPT=0
+TimeoutStartSec=30min
