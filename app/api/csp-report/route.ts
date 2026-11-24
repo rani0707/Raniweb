@@ -7,7 +7,9 @@ export async function POST(request: Request) {
   if (!['application/csp-report', 'application/reports+json', 'application/json'].includes(contentType ?? '')) {
     return new Response(null, { status: 415 })
   }
-  const clientKey = trustedReportClient(request.headers, process.env.CSP_REPORT_TRUSTED_IP_HEADER)
+  const trustedIpHeader = process.env.CSP_REPORT_TRUSTED_IP_HEADER
+  const clientKey = trustedReportClient(request.headers, trustedIpHeader)
+  if (trustedIpHeader && !clientKey) return new Response(null, { status: 403 })
   if (!acceptReport(Date.now(), clientKey)) return new Response(null, { status: 429, headers: { 'Retry-After': '60' } })
   try {
     const reports = summarizeReports(await readReport(request))
