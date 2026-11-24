@@ -1,42 +1,91 @@
-import { readFile, writeFile, readdir } from 'node:fs/promises'
-import { createHash } from 'node:crypto'
-import sharp from 'sharp'
 import assert from 'node:assert/strict'
-const check = process.argv.includes('--check')
-const existingDimensions = check ? JSON.parse(await readFile('data/project-images.json', 'utf8')) : undefined
+import { createHash, randomUUID } from 'node:crypto'
+import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises'
+import sharp from 'sharp'
 
-const folder = 'public/images/projects'
-const sources = 'assets/project-sources'
-const previous = JSON.parse(await readFile('data/image-sources.json', 'utf8'))
+const check = process.argv.includes('--check')
+const sourceDirectory = 'assets/project-sources'
+const outputDirectory = 'public/images/projects'
+const markdownDirectory = 'public/content/projects'
+const mappingFile = 'data/image-sources.json'
+const dimensionsFile = 'data/project-images.json'
+const publicPath = '/images/projects/'
+const generatedName = /^[a-f0-9]{20}\.webp$/
+
+async function replaceFile(path, contents) {
+  const temp = `${path}.${randomUUID()}.tmp`
+  try {
+    await writeFile(temp, contents)
+    await rename(temp, path)
+  } finally {
+    await rm(temp, { force: true })
+  }
+}
+
+const previous = JSON.parse(await readFile(mappingFile, 'utf8'))
 const mapping = {}
 const dimensions = {}
-const replacements = new Map()
-for (const source of (await readdir(sources)).filter(name => name.endsWith('.png')).sort()) {
-  const bytes = await sharp(`${sources}/${source}`).resize({ width: 1120, withoutEnlargement: true }).webp({ quality: 90, effort: 5 }).toBuffer()
+const output = new Map()
+
+for (const source of (await readdir(sourceDirectory)).filter(name => name.endsWith('.png')).sort()) {
+  const bytes = await sharp(`${sourceDirectory}/${source}`)
+    .resize({ width: 1120, withoutEnlargement: true })
+    .webp({ quality: 90, effort: 5 })
+    .toBuffer()
   const name = `${createHash('sha256').update(bytes).digest('hex').slice(0, 20)}.webp`
-  if (check) assert.ok(bytes.equals(await readFile(`${folder}/${name}`)), `Changed image: ${name}`)
-  else await writeFile(`${folder}/${name}`, bytes)
   mapping[source] = name
+  if (output.has(name)) continue
+
+  output.set(name, bytes)
   const { width, height } = await sharp(bytes).metadata()
-  dimensions[`/images/projects/${name}`] = { width, height }
-  if (check) assert.deepEqual(existingDimensions[`/images/projects/${name}`], { width, height })
-  replacements.set(`/images/projects/${source}`, `/images/projects/${name}`)
-  if (previous[source]) replacements.set(`/images/projects/${previous[source]}`, `/images/projects/${name}`)
+  dimensions[publicPath + name] = { width, height }
 }
-for (const name of await readdir('public/content/projects')) {
-  if (!name.endsWith('.md')) continue
-  const file = `public/content/projects/${name}`
-  const original = await readFile(file, 'utf8')
-  let markdown = original
-  for (const [from, to] of replacements) markdown = markdown.replaceAll(from, to)
-  if (check) assert.equal(markdown, original, `Outdated references in ${file}`)
-  else await writeFile(file, markdown)
+
+const successors = new Map()
+for (const [source, name] of Object.entries(mapping)) {
+  const oldName = previous[source]
+  if (!generatedName.test(oldName) || output.has(oldName)) continue
+  if (!successors.has(oldName)) successors.set(oldName, new Set())
+  successors.get(oldName).add(name)
 }
+
+const markdown = new Map()
+for (const file of (await readdir(markdownDirectory)).filter(name => name.endsWith('.md'))) {
+  const path = `${markdownDirectory}/${file}`
+  const original = await readFile(path, 'utf8')
+  const updated = original.replace(/\/images\/projects\/([\w.-]+)/g, (reference, name) => {
+    const candidates = successors.get(name)
+    let nextName = name
+    if (Object.hasOwn(mapping, name)) nextName = mapping[name]
+    else if (candidates?.size === 1) nextName = candidates.values().next().value
+
+    assert.ok(output.has(nextName), `${file}: replace or remove the reference to ${reference} before optimizing.`)
+    return publicPath + nextName
+  })
+  if (updated !== original) markdown.set(path, updated)
+}
+
+if (!check) await mkdir(outputDirectory, { recursive: true })
+const stale = (await readdir(outputDirectory, { withFileTypes: true }))
+  .filter(file => file.isFile() && generatedName.test(file.name) && !output.has(file.name))
+  .map(file => file.name)
+
 if (check) {
-  assert.deepEqual(mapping, previous)
-  console.log('PASS: image conversion is reproducible; image bytes, dimensions and references are unchanged.')
-  process.exit(0)
+  assert.deepEqual(mapping, previous, 'Image source mapping is out of date')
+  assert.deepEqual(dimensions, JSON.parse(await readFile(dimensionsFile, 'utf8')))
+  assert.deepEqual([...markdown.keys()], [], 'Markdown image references are out of date')
+  assert.deepEqual(stale, [], 'Obsolete WebP files are still public')
+  for (const [name, bytes] of output) {
+    assert.ok(bytes.equals(await readFile(`${outputDirectory}/${name}`)), `Changed image: ${name}`)
+  }
+  console.log(`Verified ${output.size} optimized images.`)
+} else {
+  for (const [name, bytes] of output) await replaceFile(`${outputDirectory}/${name}`, bytes)
+  for (const [path, content] of markdown) await replaceFile(path, content)
+  await replaceFile(mappingFile, JSON.stringify(mapping, null, 2) + '\n')
+  await replaceFile(dimensionsFile, JSON.stringify(dimensions, null, 2) + '\n')
+
+  // Retire public copies after the replacement assets and references are ready.
+  for (const name of stale) await rm(`${outputDirectory}/${name}`, { force: true })
+  console.log(`Optimized ${output.size} images and removed ${stale.length} obsolete WebP files.`)
 }
-await writeFile('data/image-sources.json', `${JSON.stringify(mapping, null, 2)}\n`)
-await writeFile('data/project-images.json', `${JSON.stringify(dimensions, null, 2)}\n`)
-console.log(`Optimized ${Object.keys(mapping).length} images; original PNG files retained. Run npm run content:check.`)

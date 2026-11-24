@@ -4,17 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/remove-standalone-dotenv.mjs",
-    "start": "node scripts/start-standalone.mjs",
+    "build": "next build && node scripts/standalone.mjs prepare",
+    "start": "node scripts/standalone.mjs start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test tests/*.test.ts",
-    "check": "npm run lint && npm run typecheck && npm test && npm run content:check",
-    "smoke": "node scripts/smoke-test.mjs",
+    "test": "node --test tests/unit/*.test.ts tests/integration/*.test.ts",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "smoke": "node tests/integration/production.mjs",
     "images:optimize": "node scripts/optimize-images.mjs",
-    "content:check": "node scripts/check-content.mjs",
-    "test:e2e": "playwright test",
-    "perf:check": "node scripts/measure-performance.mjs"
+    "test:e2e": "playwright test"
   },
   "engines": {
     "node": ">=26.13.1 <27",

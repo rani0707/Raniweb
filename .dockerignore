@@ -1,11 +1,9 @@
-# Only send the files used to install, check and build the application.
+# Only send the files used to install and build the application.
 **
 !package.json
 !package-lock.json
 !tsconfig.json
 !next.config.js
-!eslint.config.mjs
-!playwright.config.ts
 !proxy.ts
 !app/
 !app/**
@@ -18,9 +16,7 @@
 !public/
 !public/**
 !scripts/
-!scripts/**
-!tests/
-!tests/**
+!scripts/standalone.mjs
 
 # Keep credentials and local artifacts out even under included directories.
 **/.env*
@@ -29,3 +25,4 @@
 **/*.log
 **/*.pem
 **/*.key
+**/*.textClipping

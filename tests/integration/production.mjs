@@ -27,6 +27,11 @@ for (const path of ['/api/health', '/robots.txt', '/sitemap.xml', '/content/proj
   assert.equal(response.status, 200, path)
   await response.body?.cancel()
 }
+for (const path of ['/.env', '/.git/config']) {
+  const response = await get(path)
+  assert.equal(response.status, 404, path)
+  await response.body?.cancel()
+}
 assert.equal((await get('/api/csp-report')).status, 405)
 const errorStyles = await get('/errors.css')
 assert.equal(errorStyles.status, 200)

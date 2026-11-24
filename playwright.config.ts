@@ -13,9 +13,8 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: { baseURL, ignoreHTTPSErrors: localTLS, trace: 'retain-on-failure' },
   webServer: process.env.E2E_BASE_URL ? undefined : {
-    command: 'node scripts/e2e-server.mjs', url: 'https://127.0.0.1:3443/api/health',
+    command: 'node tests/e2e/serve.mjs', url: 'https://127.0.0.1:3443/api/health',
     ignoreHTTPSErrors: true,
-    env: { PORT: '3107', SERVER_HOST: '127.0.0.1' },
     reuseExistingServer: !process.env.CI,
   },
   projects: [
