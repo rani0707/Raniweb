@@ -13,6 +13,11 @@ port=18081
 app=raniweb-web
 candidate=raniweb-web-candidate
 previous=raniweb-web-previous
+trusted_report_ip_header=${CSP_REPORT_TRUSTED_IP_HEADER:-}
+if [[ -n "$trusted_report_ip_header" && "$trusted_report_ip_header" != cf-connecting-ip ]]; then
+  echo 'CSP_REPORT_TRUSTED_IP_HEADER must be unset or cf-connecting-ip' >&2
+  exit 1
+fi
 
 docker network inspect "$network" >/dev/null
 git switch main
@@ -41,7 +46,7 @@ check_app() {
 
 run_app() {
   docker run -d --name "$1" --restart "$2" --network "$network" \
-    --env "PORT=$port" \
+    --env "PORT=$port" --env "CSP_REPORT_TRUSTED_IP_HEADER=$trusted_report_ip_header" \
     --read-only --tmpfs /tmp:rw,nosuid,noexec,size=64m \
     --cap-drop ALL --security-opt no-new-privileges "$image"
 }
@@ -54,6 +59,7 @@ fi
 if exists "$app" &&
    [[ "$(docker inspect --format '{{.Config.Image}} {{.State.Running}}' "$app")" == "$image true" ]] &&
    [[ "$(docker inspect --format '{{if index .NetworkSettings.Networks "cloudflare-net"}}attached{{end}}' "$app")" == attached ]] &&
+   [[ "$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$app" | sed -n 's/^CSP_REPORT_TRUSTED_IP_HEADER=//p')" == "$trusted_report_ip_header" ]] &&
    check_app "$app"; then
   exit 0
 fi

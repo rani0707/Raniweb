@@ -11,4 +11,6 @@ SupplementaryGroups=docker
 WorkingDirectory=/home/ubuntu/RaniWeb
 ExecStart=/bin/bash /home/ubuntu/RaniWeb/deployment/deploy-cloudflare.sh
 Environment=GIT_TERMINAL_PROMPT=0
+# Set CSP_REPORT_TRUSTED_IP_HEADER=cf-connecting-ip in a drop-in only if the
+# origin accepts requests exclusively from the Cloudflare Tunnel connector.
 TimeoutStartSec=30min
