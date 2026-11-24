@@ -7,7 +7,6 @@ next-env.d.ts
 *.tsbuildinfo
 playwright-report/
 test-results/
-audit-results/
 
 # Local environment and credentials
 .env*
@@ -19,3 +18,4 @@ audit-results/
 .DS_Store
 Thumbs.db
 *.log
+*.textClipping

@@ -23,7 +23,7 @@ jobs:
           version: v0.76.2
           scan-type: fs
           scan-ref: .
-          skip-dirs: audit-results,node_modules,.next,test-results,playwright-report
+          skip-dirs: node_modules,.next,test-results,playwright-report
           scanners: vuln,secret
           severity: HIGH,CRITICAL
           ignore-unfixed: false

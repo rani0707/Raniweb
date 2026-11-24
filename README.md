@@ -39,7 +39,13 @@ npm run check
 npm run build
 ```
 
+운영 빌드는 `npm start`로 확인할 수 있습니다. 공개 콘텐츠를 바꿨다면 `npm run build`를 다시 실행합니다.
+
+프로젝트 PNG를 수정한 뒤 `npm run images:optimize`를 실행하면 WebP, Markdown 이미지 경로와 이미지 목록이 갱신되고 이전 WebP가 정리됩니다. `npm run images:optimize -- --check`는 파일을 수정하지 않고 결과를 검사합니다.
+
 ## 프로젝트 구조
+
+![RaniWeb 앱 구조. 상세 모달은 브라우저에서 Markdown을 요청하고, 개별 프로젝트 페이지는 서버에서 파일을 읽습니다. 두 화면은 같은 Markdown 렌더러를 사용합니다.](assets/architecture-ko.png)
 
 | 경로 | 내용 |
 | --- | --- |
